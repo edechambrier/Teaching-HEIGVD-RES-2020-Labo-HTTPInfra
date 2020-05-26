@@ -12,7 +12,6 @@ The files used for this step can be found in the repo at this location :
 `docker-images/apache-php-image/`
 
 
-
 ### You can do a demo, where you build the image, run a container and access content from a browser.
 
 Here are the screen-shots and/or informations for the different steps :
@@ -32,7 +31,7 @@ Successfully built de11a077ae19
 Successfully tagged res/apache_php:latest
 SECURITY WARNING: You are building a Docker image from Windows against a non-Windows Docker host. All files and directories added to build context will have '-rwxr-xr-x' permissions. It is recommended to double check and reset permissions for sensitive files and directories.
 ````
-#### running the container in interactive
+#### running the container in interactive mode
 Command used : `$ docker run -p 9090:80 res/apache_php`
   <img src="pictures\step1\running-res-apache_php-interactive-mod.png" />
 	
@@ -128,3 +127,40 @@ If this directory is changed, it will also be necessary to change the `Dokerfile
 
 
 ## Step 2: Dynamic HTTP server with express.js
+
+### Repo directory with everything needed to build the Docker image.
+
+All the files nedded for this step are located in the folder `docker-images/express-image/`
+
+
+### You can do a demo, where you build the image, run a container and access content from a browser.
+
+Here are the screen-shots and/or informations for the different steps :
+
+#### Building the image
+In order to build the image, the following command was used : `$ ###########`
+this was the output :
+````
+#############
+#############
+#############
+#############
+````
+
+#### running the container in interactive mode
+Command used : `###################`
+	
+
+#### the result in a web browser
+
+
+### You generate dynamic, random content and return a JSON payload to the client.
+
+
+### You cannot return the same content as the webcast (you cannot return a list of people).
+
+
+### You don't have to use express.js; if you want, you can use another JavaScript web framework or event another language.
+
+
+### You have documented your configuration in your report.
