@@ -74,7 +74,8 @@ The Apache configuration files can be found in a running container at the follow
 In order to view the configuration files, the following command can be used :
 ```bash
 Edouard@LAPTOP-F56LAN3B MINGW64 /c/Program Files/Docker Toolbox
-$ docker exec -it vibrant_pike /bin/bash                                                                                root@a86e9c1c697d:/var/www/html# cd /etc/apache2
+$ docker exec -it vibrant_pike /bin/bash                                                                               
+root@a86e9c1c697d:/var/www/html# cd /etc/apache2
 root@a86e9c1c697d:/etc/apache2# ls
 apache2.conf    conf-enabled  magic           mods-enabled  sites-available
 conf-available  envvars       mods-available  ports.conf    sites-enabled
