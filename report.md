@@ -138,7 +138,7 @@ All the files nedded for this step are located in the folder `docker-images/expr
 Here are the screen-shots and/or informations for the different steps :
 
 #### Building the image
-In order to build the image, the following command was used : `$ ###########`
+In order to build the image, the following command was used : `$ docker build -t res/express_playground .`
 this was the output :
 ````
 #############
@@ -164,3 +164,4 @@ Command used : `###################`
 
 
 ### You have documented your configuration in your report.
+

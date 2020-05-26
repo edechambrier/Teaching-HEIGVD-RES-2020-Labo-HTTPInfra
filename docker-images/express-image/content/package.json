@@ -1,0 +1,15 @@
+{
+  "name": "node-js-playground",
+  "version": "0.1.0",
+  "description": "Just for testing some Node.js stuff",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Edouard de Chambrier, Jeremy Corbaz",
+  "license": "ISC",
+  "dependencies": {
+    "chance": "^1.1.6",
+    "express": "^4.17.1"
+  }
+}
