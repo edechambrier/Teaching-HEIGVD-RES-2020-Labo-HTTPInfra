@@ -130,38 +130,132 @@ If this directory is changed, it will also be necessary to change the `Dokerfile
 
 ### Repo directory with everything needed to build the Docker image.
 
-All the files nedded for this step are located in the folder `docker-images/express-image/`
+All the files needed for this step are located in the folder `docker-images/express-image/`
 
+### Setting-up the Docker file
+The Dokerfile used contains the following configuration :
+```docker
+FROM node:12
+
+COPY content/ /opt/app
+
+CMD ["node", "/opt/app/index.js"]
+```
+>`FROM node:12`
+	We create a new Docker image from the latest 12th version of Node.js *(at the buil time v12.16.3)* which is the current LTS version.
+
+>`COPY content/ /opt/app`
+	we copy the content of the local file `content` to the Docker image file `/opt/app`
+	this file contains our Node.js test page
+
+> `CMD ["node", "/opt/app/index.js"]`
+	this command launches the `/opt/app/index.js` application *which is out test Nose.js application*
 
 ### You can do a demo, where you build the image, run a container and access content from a browser.
+
 
 Here are the screen-shots and/or informations for the different steps :
 
 #### Building the image
+
 In order to build the image, the following command was used : `$ docker build -t res/express_playground .`
 this was the output :
+
 ````
-#############
-#############
-#############
-#############
+Sending build context to Docker daemon  4.051MB
+Step 1/3 : FROM node:12
+ ---> bdca973cfa07
+Step 2/3 : COPY content/ /opt/app
+ ---> Using cache
+ ---> dffe93f7f3eb
+Step 3/3 : CMD ["node", "/opt/app/index.js"]
+ ---> Using cache
+ ---> ba256fb81306
+Successfully built ba256fb81306
+Successfully tagged res/express_playground:latest
+SECURITY WARNING: You are building a Docker image from Windows against a non-Windows Docker host. All files and directories added to build context will have '-rwxr-xr-x' permissions. It is recommended to double check and reset permissions for sensitive files and directories.
 ````
 
 #### running the container in interactive mode
-Command used : `###################`
-	
+Command used : `$ docker run -p 9090:3000 res/express_playground`
 
-#### the result in a web browser
+#### Result in different applications
 
+##### the output from the Docker command line
+<img src="pictures\step2\result-docker-output.png" />
+
+##### the output from the windowns command line
+
+Command used in order to connect to the Docker machine : `telnet 192.168.99.100 9090`
+Command used in order to get a response from the Docker machine :`GET / HTTP/1.0`
+
+
+<img src="pictures\step2\result-cmd-window.png" />
+
+##### the result in a web browser
+<img src="pictures\step2\result-chrome.png" />
+
+##### the result in Postman
+<img src="pictures\step2\result-postmann.png" />
 
 ### You generate dynamic, random content and return a JSON payload to the client.
+The JSON payload generated is a list of emplyment jobs.
 
+The code usd is the function `createJobs()` that can be foud in the `index.js`located in the folder `docker-images/express-image/content`.
 
-### You cannot return the same content as the webcast (you cannot return a list of people).
+Here is the function :
+```javascript
+function createJobs(){
+	
+	var numberOfJobs = chance.integer({
+		min: 5,
+		max: 20
+	});
+	
+	var jobs = [];
 
+	for(var i = 0; i< numberOfJobs; i++){
 
-### You don't have to use express.js; if you want, you can use another JavaScript web framework or event another language.
+		var companyDomaine = chance.domain();
 
+		jobs.push({
+			jobName : chance.profession({rank: true}),
+			companyName : chance.company(),
+			companyContact : {
+				companyAddress : chance.address(),
+				companyWebsite : "https://"+companyDomaine,
+				companyEmail : chance.email({domain: companyDomaine}),
+				companyPhone : chance.phone({ country: 'fr', mobile: false })
+			},
+			rate : chance.integer({	min: 1, max: 5}) * 20 + "%",
+			annualSalary : chance.euro({max: 100000})
+		});
 
-### You have documented your configuration in your report.
+	}
+	console.log(jobs);
+	return jobs;
+}
+```
+
+It creates between 5 an 20 jobs with their own job name, company (with email and contact info) rate and salary.
+
+The Node.js test app we created has the following configuration :
+
+```json
+{
+  "name": "node-js-playground",
+  "version": "0.1.0",
+  "description": "Just for testing some Node.js stuff",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Edouard de Chambrier, Jeremy Corbaz",
+  "license": "ISC",
+  "dependencies": {
+    "chance": "^1.1.6",
+    "express": "^4.17.1"
+  }
+}
+```
 
