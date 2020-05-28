@@ -274,9 +274,45 @@ the command used to launch it is the following :
 
 We have both images running with the following configurations :
 <img src="pictures\step3\docker-running-images.png" />
+
 >Even if it is not written in the screen-shot above, the express_dynamic image is listening on the port 3000
+
+### testing revers proxy
+
+In order to setup a testing environment for the reverse proxy, a basic apache server has to be started (with access to the bash):
+`docker run -it -p 8080:80 php:7.2-apache /bin/bash`
+
+As some configuration files will have to be created/updated, we have to install an editor on the machine.
+>I used nano, as I was having problems with vim
+
+`apt-get update`
+`apt-get install nano`
+
+The `001-default.conf` file vas created in the direcoty `/etc/apache2/sites-available/` with the following configuration :
+<img src="pictures\step3\001-config.png" />
+
+After, the *new* site had to be enabled with the folowing command :
+`root@055b6cceb856:/etc/apache2# a2ensite 001*`
+>note that the directory is important as well
+
+In order to enable our neuw configurtation, som resources had to be activated and the apache server restarted
+root@055b6cceb856:/etc/apache2# `a2enmod proxy`
+root@055b6cceb856:/etc/apache2# `a2enmod proxy_http`
+root@055b6cceb856:/etc/apache2# `service apache2 restart`
+
+And both redirections where successfully tested :
+
+<img src="pictures\step3\cmd-working-proxypass.png" />
+
+<img src="pictures\step3\cmd-working-proxypass-json.png" />
+
 
 ### You are able to explain why the static configuration is fragile and needs to be improved.
 
 The configuration is fragile because the the `IP` addresses of the `apache static server` and the `dynamic web server` are hard coded in the configuration.
 This is a problem because the `IP` addresses of the Docker containers are dynamically attributed. therefor, if the containers have to be re-started, their `IP` addresses can be different and the system would not work anymore.
+
+
+
+
+
