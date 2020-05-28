@@ -307,6 +307,90 @@ And both redirections where successfully tested :
 <img src="pictures\step3\cmd-working-proxypass-json.png" />
 
 
+### creating the Docker image
+
+The configuration above is all well and good, but it is not permanent... 
+Here are the steps taken in order to create a Docker image with a similar configuration.
+
+#### the Dockerfile
+
+The docker file used has the following configuration :
+```
+FROM php:7.2-apache
+
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http
+RUN a2ensite 000-* 001-*
+```
+>it crates a Docker image based on the official `php:7.2-apache` image
+	copies the content of the local folder `conf/` to the image folder `/etc/apache2`
+	runs the necessary commands to enable the proxy, reverse proxy and the custom configuration of the `.conf` files.
+
+#### the apache configuration files
+
+The `.conf` files have basically the same configuration as tested forehand.
+
+The `000-default.conf`file has the following configuration :
+
+```
+<VirtualHost *:80>
+</VirtualHost>
+```
+
+> this file is created in order to force the external connection to use the server name `demo.res.ch` from the `001-reverse-proxy.conf` file.
+
+And the `001-reverse-proxy.conf` has this configuration :
+
+```
+<VirtualHost *:80>
+		ServerName demo.res.ch
+		
+		ProxyPass "/api/students/" "http://172.17.0.3:3000"
+		ProxyPassReverse "/api/students/" "http://172.17.0.3:3000"
+		
+		ProxyPass "/" "http://172.17.0.2:80"
+		ProxyPassReverse "/" "http://172.17.0.2:80"
+		
+</VirtualHost>
+```
+
+#### building the image
+The Docker image can now be built with the following command :
+`docker build -t res/apache_rp .`
+
+#### testin the image
+
+We can now test the newly built image by running it with the following command:
+`docker run -p 8080:80 res/apache_rp`
+
+By opening the URL `http://192.168.99.100:8080/` in a web-browser, shockingly we have the following error :
+	<img src="pictures\step3\forbidden.png" />
+
+This is because the correct Host *should be `Host:demo.res.ch`* has not been specified.
+
+In order to remedy this, we will have to modify the DNS configuration file.
+In Windows, this file est called `hosts` an can be found in the following folder : `C:\Windows\System32\drivers\etc`
+
+the followin line mut be added in the file :
+```
+
+192.168.99.100 demo.res.ch
+
+```
+
+We can now tryout our websites again.
+
+And without any surprises, everything works !
+
+<img src="pictures\step3\working-browser-bootstrap-example.png" />
+>`http://demo.res.ch:8080/`
+
+
+
+<img src="pictures\step3\working-browser-api-students.png" />
+>`http://demo.res.ch:8080/api/students/`
+
 ### You are able to explain why the static configuration is fragile and needs to be improved.
 
 The configuration is fragile because the the `IP` addresses of the `apache static server` and the `dynamic web server` are hard coded in the configuration.

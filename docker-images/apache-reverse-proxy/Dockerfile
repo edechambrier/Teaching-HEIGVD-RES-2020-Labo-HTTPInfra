@@ -1,5 +1,6 @@
-docker exec -it pensive_franklin /bin/bash
+FROM php:7.2-apache
 
-cd /etc/apache2/sites-available/
+COPY conf/ /etc/apache2
 
-vi 001-default.conf
+RUN a2enmod proxy proxy_http
+RUN a2ensite 000-* 001-*
