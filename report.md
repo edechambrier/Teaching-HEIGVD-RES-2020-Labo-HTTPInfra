@@ -259,3 +259,24 @@ The Node.js test app we created has the following configuration :
 }
 ```
 
+## Step 3: Reverse proxy with apache (static configuration)
+
+### Repo directory with everything needed to build the Docker image.
+for this part, we are going to re-use the `res/apache_php` Docker image created in the first part.
+
+the command used to launch it is the following :
+`$ docker run -d --name apache_static res/apache_php`
+
+We are also going to re-use the `res/express_playground` Docker image created in the second part.
+
+the command used to launch it is the following :
+`$ docker run -d --name express_dynamic res/express_playground`
+
+We have both images running with the following configurations :
+<img src="pictures\step3\docker-running-images.png" />
+>Even if it is not written in the screen-shot above, the express_dynamic image is listening on the port 3000
+
+### You are able to explain why the static configuration is fragile and needs to be improved.
+
+The configuration is fragile because the the `IP` addresses of the `apache static server` and the `dynamic web server` are hard coded in the configuration.
+This is a problem because the `IP` addresses of the Docker containers are dynamically attributed. therefor, if the containers have to be re-started, their `IP` addresses can be different and the system would not work anymore.
