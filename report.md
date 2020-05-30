@@ -456,3 +456,58 @@ We can now run it `docker run -d  res/ajax_playground` *(after killing the thest
 
 You can see in the developper par three ajax calls.
 
+## Step 5: Dynamic reverse proxy configuration
+
+### testing out the Docker configuration
+
+In order to setup our dynamic revers proxy, a copy of the `res/apache_rp` has been in the `docker-images/apache-reverse-proxy-dynamic` folder.
+
+In ordet to pass varaiables forom the `docker run` to the image internal configuration, the `apache2-foreground` file has been copied frome it's original place (https://github.com/docker-library/php/blob/master/7.2/stretch/apache/apache2-foreground) and altered in order to add the folowin lines :
+```
+# Add setup for RES lab : dynamic reverse proxy
+echo "Setup for the RES lab..."
+echo "Static app URL:  $STATIC_APP"
+echo "Dynamic app URL: $DYNAMIC_APP"
+```
+
+The Dockerfile has also been modified in order to take into account the `apache2-foreground` file :
+```
+FROM php:7.2-apache
+
+COPY apache2-foreground /usr/local/bin/
+
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http
+RUN a2ensite 000-* 001-*
+```
+
+We can now make a `docker build -t res/apache_rp_dyn .` to build the image.
+Now the image is built, we can run `docker run -e STATIC_APP=127.17.0.2:80 -e DYNAMIC_APP=172.17.0.3:3000 res/apache_rp_dyn` and have a look at the output to see if everything went ok.
+
+<figure class="image">
+  <img src="pictures\step5\passing-var-test.png" alt="testing STATIC_APP and DYNAMIC_APP variables">
+</figure>
+
+As proven by the screen-suot above, everything whent smoothly.
+
+
+### prepering the config template
+
+As instruced, the configutaion template file has been created and completed.
+`docker-images/apache-reverse-proxy-dynamic/template/config-template.php`
+
+It is time to test it !
+
+<figure class="image">
+  <img src="pictures\step5\php-config-test.png" alt="testing STATIC_APP and DYNAMIC_APP variables in php config template file">
+</figure>
+
+Everything OK !
+
+You have a GitHub repo with everything needed to build the various images.
+You have found a way to replace the static configuration of the reverse proxy (hard-coded IP adresses) with a dynamic configuration.
+You may use the approach presented in the webcast (environment variables and PHP script executed when the reverse proxy container is started), or you may use another approach. The requirement is that you should not have to rebuild the reverse proxy Docker image when the IP addresses of the servers change.
+You are able to do an end-to-end demo with a well-prepared scenario. Make sure that you can demonstrate that everything works fine when the IP addresses change!
+You are able to explain how you have implemented the solution and walk us through the configuration and the code.
+You have documented your configuration in your report.

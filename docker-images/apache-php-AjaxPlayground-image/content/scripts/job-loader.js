@@ -1,5 +1,4 @@
 $(function(){
-	
 	function populateJobs(){
 		
 		// if already 50 jobs displayed, we clear out the displayed jobs
@@ -43,8 +42,6 @@ $(function(){
 		
 	});
 	}
-	
 	 populateJobs();
 	 setInterval(populateJobs, 2000);
-	
 });
