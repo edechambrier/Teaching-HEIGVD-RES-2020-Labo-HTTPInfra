@@ -384,19 +384,23 @@ We can now tryout our websites again.
 And without any surprises, everything works !
 
 <img src="pictures\step3\working-browser-bootstrap-example.png" />
->`http://demo.res.ch:8080/`
+> `http://demo.res.ch:8080/`
 
 
 
 <img src="pictures\step3\working-browser-api-students.png" />
->`http://demo.res.ch:8080/api/students/`
+> `http://demo.res.ch:8080/api/students/`
 
 ### You are able to explain why the static configuration is fragile and needs to be improved.
 
 The configuration is fragile because the the `IP` addresses of the `apache static server` and the `dynamic web server` are hard coded in the configuration.
 This is a problem because the `IP` addresses of the Docker containers are dynamically attributed. therefor, if the containers have to be re-started, their `IP` addresses can be different and the system would not work anymore.
 
+## Step 4: AJAX requests with JQuery
 
-
-
+You have a GitHub repo with everything needed to build the various images.
+You can do a complete, end-to-end demonstration: the web page is dynamically updated every few seconds (with the data coming from the dynamic backend).
+You are able to prove that AJAX requests are sent by the browser and you can show the content of th responses.
+You are able to explain why your demo would not work without a reverse proxy (because of a security restriction).
+You have documented your configuration in your report.
 
