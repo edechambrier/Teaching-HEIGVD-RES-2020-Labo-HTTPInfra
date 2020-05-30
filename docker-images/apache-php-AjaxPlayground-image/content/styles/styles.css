@@ -175,7 +175,7 @@ span {
 }
 #Services .service-icon {
   width: 100%;
-  height: 220px;
+  height: 300px;
   padding: 20px;
   text-align: center;
   transition: all .5s ease;
@@ -187,7 +187,7 @@ span {
   z-index: 1;
   opacity: 0;
   width: 100%;
-  height: 220px;
+  height: 300px;
   padding: 20px;
   text-align: center;
   transition: all .5s ease;
@@ -226,7 +226,14 @@ span {
   font-size: 15px;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 10px;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+#Services .service-box .service-content h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 5px;
   text-transform: uppercase;
 }
 #Services .service-box .service-content p {
@@ -556,5 +563,18 @@ footer.footer p.small a:hover, footer.footer p.small a.focus {
 }
 #Contact .address-block span {
 	text-transform: none;
+}
+
+.table-jobs{
+	color:#ffffff;
+	font-size:12px;
+}
+
+.table-jobs a{
+	color:#ffffff;
+}
+
+.table-jobs td {
+  vertical-align: top;
 }
 /* Styles Begins */
