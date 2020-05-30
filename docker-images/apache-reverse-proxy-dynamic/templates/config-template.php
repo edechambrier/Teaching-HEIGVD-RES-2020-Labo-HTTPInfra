@@ -8,7 +8,7 @@ $static_app = getenv('STATIC_APP');
 		ProxyPass "/api/students/" "http://<?php echo $dynamic_app; ?>/"
 		ProxyPassReverse "/api/students/" "http://<?php echo $dynamic_app; ?>/"
 		
-		ProxyPass "/" "<?php echo $static_app; ?>/"
-		ProxyPassReverse "/" "<?php echo $static_app; ?>"
+		ProxyPass "/" "http://<?php echo $static_app; ?>/"
+		ProxyPassReverse "/" "http://<?php echo $static_app; ?>/"
 		
 </VirtualHost>

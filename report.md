@@ -505,9 +505,92 @@ It is time to test it !
 
 Everything OK !
 
-You have a GitHub repo with everything needed to build the various images.
-You have found a way to replace the static configuration of the reverse proxy (hard-coded IP adresses) with a dynamic configuration.
-You may use the approach presented in the webcast (environment variables and PHP script executed when the reverse proxy container is started), or you may use another approach. The requirement is that you should not have to rebuild the reverse proxy Docker image when the IP addresses of the servers change.
-You are able to do an end-to-end demo with a well-prepared scenario. Make sure that you can demonstrate that everything works fine when the IP addresses change!
-You are able to explain how you have implemented the solution and walk us through the configuration and the code.
-You have documented your configuration in your report.
+### putting everythig together
+
+The firs step to putting everything together in order to have a dynmaic reverse proxy is to add the `config-template.php` file created earlyer to the `res/apache_rp_dyn` Docker image.
+
+In order to do so, we have to alter again the Docker file by adding the line `COPY templates /var/apache2/templates` :
+```
+FROM php:7.2-apache
+
+COPY apache2-foreground /usr/local/bin/
+
+COPY templates /var/apache2/templates
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http
+RUN a2ensite 000-* 001-*
+```
+
+We also have to add the line `php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf`  and `php /var/apache2/templates/config-template.php > /etc/apache2/sites-enabled/001-reverse-proxy.conf`in the `apache2-foreground` file in order to apply the configuration by outputting it as a file in the correct location *(the second line is to enable the website, it will be needed after some cleanup...)*.
+```
+# Add setup for RES lab : dynamic reverse proxy
+echo "Setup for the RES lab..."
+echo "Static app URL:  $STATIC_APP"
+echo "Dynamic app URL: $DYNAMIC_APP"
+php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf
+php /var/apache2/templates/config-template.php > /etc/apache2/sites-enabled/001-reverse-proxy.conf
+```
+
+As the `001-reverse-proxy.conf` is being overwritten, we can delete the original file form the folder `docker-images\apache-reverse-proxy-dynamic\conf\sites-available`
+the following line has also to be modified in the Dockerfile : `RUN a2ensite 000-* 001-*` --> `RUN a2ensite 000-*`
+
+```
+FROM php:7.2-apache
+
+COPY apache2-foreground /usr/local/bin/
+
+COPY templates /var/apache2/templates
+COPY conf/ /etc/apache2
+
+RUN a2enmod proxy proxy_http
+RUN a2ensite 000-*
+```
+
+And now, we can rebuild the Docker image : `docker build -t res/apache_rp_dyn .`
+
+### testing to see if it all works
+
+We start by checking taht no conainers are runnin.
+Then we can start multiple instances of the `res/ajax_playground` and `res/express_playground` images in order to have diffrent `IP` adresses.
+> note that a name has been given to the image instances we are going to use
+
+```
+docker ps
+
+docker run -d  res/ajax_playground
+docker run -d  res/ajax_playground
+docker run -d  res/ajax_playground
+docker run -d --name apache_ajax res/ajax_playground
+
+docker run -d res/express_playground
+docker run -d res/express_playground
+docker run -d --name express_dynmanic res/express_playground
+```
+
+<figure class="image">
+  <img src="pictures\step5\part5-validating-01.png" alt="Validating part 1">
+</figure>
+Now we check the `IP` addresses for the instances `apache_ajax` and `express_dynmanic`
+
+```
+docker inspect apache_ajax | grep -i ipaddress
+docker inspect express_dynmanic | grep -i ipaddress
+```
+
+<figure class="image">
+  <img src="pictures\step5\part5-validating-01.png" alt="Validating part 2 : getting the IP addresses">
+</figure>
+> we have found the IP for apache_ajax : 172.17.0.5
+ and for express_dynmanic : 172.17.0.8
+
+Now we have to run `docker run -e STATIC_APP=172.17.0.5:80 -e DYNAMIC_APP=172.17.0.8:3000 --name apache_rp_dyn -p 8080:80 -it res/apache_rp_dyn`
+
+And we can get the rewarding results :
+<figure class="image">
+  <img src="pictures\step5\part5-validating-04.png" alt="Validating part 2 : getting the IP addresses">
+</figure>
+
+<figure class="image">
+  <img src="pictures\step5\part5-validating-03.png" alt="Validating part 2 : getting the IP addresses">
+</figure>
