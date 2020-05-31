@@ -409,7 +409,7 @@ Instead, the docker image will run with the following command :
 
 > the terminal that is going to run the command has to be based in the directory where the file we want to use for our website are.
 
-As the base website ts going to be herverly modified, it is easier to use proper tools instead of `vim` or `nano` form a docker image.
+As the base website ts going to be heavily modified, it is easier to use proper tools instead of `vim` or `nano` form a docker image.
 
 In order to finish the set-up, we have to start the `res/express_playground` image :
  `docker run -d --name express_dynamic res/express_playground`
@@ -437,7 +437,7 @@ One the 50 job limit is reached, the content of the `<div>` is cleared before ad
 
 #### Dockerfile
 
-As we only modified the content of the website and not the configuration of the docker image, the Dockerfile is the same as in the first tep :
+As we only modified the content of the website and not the configuration of the docker image, the Dockerfile is the same as in the first step :
 ````dockerfile
 FROM php:7.2-apache
 
@@ -447,14 +447,14 @@ COPY content/ /var/www/html/
 #### creating and running the image
 
 The image can now be created with the following command : `docker build -t res/ajax_playground .`
-We can now run it `docker run -d  res/ajax_playground` *(after killing the thest conainer from before)* and if all the required containers are running with the correct `IP` addresses, we shoul have a wonderfull result :
+We can now run it `docker run -d  res/ajax_playground` *(after killing the test container from before)* and if all the required containers are running with the correct `IP` addresses, we should have a wonderful result :
 
 <figure class="image">
   <img src="pictures\step4\job-list-in-browswer.png" alt="Working AJAX">
   <figcaption>URL : http://demo.res.ch:8080/</figcaption>
 </figure>
 
-You can see in the developper par three ajax calls.
+You can see in the developer par three Ajax calls.
 
 ## Step 5: Dynamic reverse proxy configuration
 
@@ -462,7 +462,7 @@ You can see in the developper par three ajax calls.
 
 In order to setup our dynamic revers proxy, a copy of the `res/apache_rp` has been in the `docker-images/apache-reverse-proxy-dynamic` folder.
 
-In ordet to pass varaiables forom the `docker run` to the image internal configuration, the `apache2-foreground` file has been copied frome it's original place (https://github.com/docker-library/php/blob/master/7.2/stretch/apache/apache2-foreground) and altered in order to add the folowin lines :
+In order to pass variables form the `docker run` to the image internal configuration, the `apache2-foreground` file has been copied from it's original place (https://github.com/docker-library/php/blob/master/7.2/stretch/apache/apache2-foreground) and altered in order to add the flowing lines :
 ```
 # Add setup for RES lab : dynamic reverse proxy
 echo "Setup for the RES lab..."
@@ -489,12 +489,12 @@ Now the image is built, we can run `docker run -e STATIC_APP=127.17.0.2:80 -e DY
   <img src="pictures\step5\passing-var-test.png" alt="testing STATIC_APP and DYNAMIC_APP variables">
 </figure>
 
-As proven by the screen-suot above, everything whent smoothly.
+As proven by the screen-shot above, everything went smoothly.
 
 
-### prepering the config template
+### preparing the config template
 
-As instruced, the configutaion template file has been created and completed.
+As instructed, the configuration template file has been created and completed.
 `docker-images/apache-reverse-proxy-dynamic/template/config-template.php`
 
 It is time to test it !
@@ -507,7 +507,7 @@ Everything OK !
 
 ### putting everythig together
 
-The firs step to putting everything together in order to have a dynmaic reverse proxy is to add the `config-template.php` file created earlyer to the `res/apache_rp_dyn` Docker image.
+The firs step to putting everything together in order to have a dynamic reverse proxy is to add the `config-template.php` file created earlier to the `res/apache_rp_dyn` Docker image.
 
 In order to do so, we have to alter again the Docker file by adding the line `COPY templates /var/apache2/templates` :
 ```
@@ -551,8 +551,9 @@ And now, we can rebuild the Docker image : `docker build -t res/apache_rp_dyn .`
 
 ### testing to see if it all works
 
-We start by checking taht no conainers are runnin.
-Then we can start multiple instances of the `res/ajax_playground` and `res/express_playground` images in order to have diffrent `IP` adresses.
+We start by checking that no containers are running.
+Then we can start multiple instances of the `res/ajax_playground` and `res/express_playground` images in order to have different `IP` addresses.
+
 >note that a name has been given to the image instances we are going to use
 
 ```
@@ -602,7 +603,7 @@ And we can get the rewarding results :
 
 #### settin-up the configuration
 
-All the files regardding this step can be found in the following directory : `docker-images/apache-reverse-proxy-dynamic-loadbalance` 
+All the files regarding this step can be found in the following directory : `docker-images/apache-reverse-proxy-dynamic-loadbalance` 
 
 In order to enable the load balancing, the `config-template.php` file has been modified like so :
 ```php
@@ -645,7 +646,7 @@ $static_app[2] = getenv('STATIC_APP_2');
 ```
 As you can can see, we have set the file for two servers for the `dynamic app` and three for the `static app`.
 
-This part of the configuraion is to enable a Load Balancer Manager web interface that should be accessed via the folowing URL : http://demo.res.ch:8080/balancer-manager
+This part of the configuration is to enable a Load Balancer Manager web interface that should be accessed via the following URL : http://demo.res.ch:8080/balancer-manager
 ```
 <Location "/balancer-manager">
 		SetHandler balancer-manager
@@ -653,7 +654,7 @@ This part of the configuraion is to enable a Load Balancer Manager web interface
 ```
 In order not to be redirected to one of the `static app` servers when entering the URL from above, this line has to be added : `ProxyPass /balancer-manager !`
 
-The `<Proxy balancer://[balancer-name]>` tags are where we define the different servers. The `ProxySet lbmethod=byrequests` determins the way the balancing for the concerned servers should work.
+The `<Proxy balancer://[balancer-name]>` tags are where we define the different servers. The `ProxySet lbmethod=byrequests` determines the way the balancing for the concerned servers should work.
 In this case, `byrequests` works in a round-robin mode.
 
 For the `ProxyPass` and `ProxyPassReverse` part of the configuration file, all we need to do is to set the target to `balancer://[balancer-name]` URL.
@@ -675,7 +676,7 @@ Now that everything is correctly configured, we can build the image : `docker bu
 
 #### getting the Docker conainers ready
 
-We start by checking taht no conainers are runnin.
+We start by checking that no containers are running.
 Then we can start multiple instances of the `res/ajax_playground` and `res/express_playground` and get their `IP` addresses
 
 ```bash
@@ -703,7 +704,7 @@ docker inspect express_dynmanic_1 | grep -i ipaddress
   <img src="pictures\stepB-lb\getting-ip.png" alt="Getting IP addresses">
 </figure>
 
-The followin `IP` addresses are found :
+The following `IP` addresses are found :
 ```
 apache_ajax_0 : 172.17.0.2
 apache_ajax_1 : 172.17.0.3
@@ -715,7 +716,8 @@ express_dynmanic_1 : 172.17.0.6
 
 We can now start our `res/apache_lb` server and take a look at the result !
 `docker run -e STATIC_APP_0=172.17.0.2:80 -e STATIC_APP_1=172.17.0.3:80 -e STATIC_APP_2=172.17.0.4:80 -e DYNAMIC_APP_0=172.17.0.5:3000 -e DYNAMIC_APP_1=172.17.0.6:3000 --name apache_rp_dyn -p 8080:80 -it res/apache_lb`
->in the future, this should be automatted
+
+>in the future, this should be automated
 
 <figure class="image">
   <img src="pictures\stepB-lb\web-ok.png" alt="Resul web still working">
@@ -724,18 +726,17 @@ We can now start our `res/apache_lb` server and take a look at the result !
 <figure class="image">
   <img src="pictures\stepB-lb\web-load-balancer.png" alt="having a look at the balancer-manager">
 </figure>
-
 You can see in the balancer-manager screen-shot that the `balancer://dynamic` has been elected far more often than the `balancer://staticapp`.
 This our javascript in work ! As it is calling for new jobs every 2 seconds.
 
 
 ### Load balancing: round-robin vs sticky sessions
 
-#### settin-up the configuration
+#### setting-up the configuration
 
->All the files regardding this step can be found in the following directory : `docker-images/apache-reverse-proxy-dynamic-loadbalance-sticky` 
+>All the files regarding this step can be found in the following directory : `docker-images/apache-reverse-proxy-dynamic-loadbalance-sticky` 
 
-Sticky sessions can be verry useful in diffrent cases : for example, if you have to log into a web page, you do not want to relog your self every time you clock on a link or reload the page becaue you have been routed to a different server.
+Sticky sessions can be very useful in different cases : for example, if you have to log into a web page, you do not want to re-log your self every time you clock on a link or reload the page because you have been routed to a different server.
 
 To set up the sticky sessions, we are going to modify the `config-template.php` file.
 
@@ -780,18 +781,18 @@ $static_app[2] = getenv('STATIC_APP_2');
 		
 </VirtualHost>
 ```
-This configuration works by setting a cookie containing the nformation about what server loaded the page `route=memberX`, and using the same server ecery time the URL is accessed.
+This configuration works by setting a cookie containing the information about what server loaded the page `route=memberX`, and using the same server every time the URL is accessed.
 `ProxySet stickysession=Application_STICKY` is to say we are using a sticky session wtun the parameters defined in `Application_STICKY`.
 The `Application_STICKY` parameters are determined by the cookie made here : `Header add Set-Cookie "Application_STICKY=sticky.%{BALANCER_WORKER_ROUTE}e;path=/;" env=BALANCER_ROUTE_CHANGED`
 
 
 #### testing out
 
-As we want to keep avery step, we are going to buil the new Docker container : `docker build -t res/apache_lb_stky .`
+As we want to keep every step, we are going to build the new Docker container : `docker build -t res/apache_lb_stky .`
 
-The cleaning-up an starting the `res/ajax_playground` and `res/express_playground` is the same as in the previos step.
+The cleaning-up an starting the `res/ajax_playground` and `res/express_playground` is the same as in the previous step.
 
-We can now launche te conainer and take a look at the results :
+We can now launch the container and take a look at the results :
 `docker run -e STATIC_APP_0=172.17.0.2:80 -e STATIC_APP_1=172.17.0.3:80 -e STATIC_APP_2=172.17.0.4:80 -e DYNAMIC_APP_0=172.17.0.5:3000 -e DYNAMIC_APP_1=172.17.0.6:3000 -p 8080:80 -it res/apache_lb_stky`
 
 <figure class="image">
@@ -803,4 +804,4 @@ We can now launche te conainer and take a look at the results :
 </figure>
 
 
-as we can see, the cookie in the websire is set to `sticky.member0`, and, after refreshing the website a bunch of times, wu can see in the balance-manager that only the `http://172.17.0.2` URL with the route `member0` has been incemented.
+as we can see, the cookie in the website is set to `sticky.member0`, and, after refreshing the website a bunch of times, we can see in the balance-manager that only the `http://172.17.0.2` URL with the route `member0` has been incremented.
