@@ -1,6 +1,8 @@
 # Report
 
+Jérémy Corbaz
 
+Edouard de Chambrier
 
 ## Step 1: Static HTTP server with apache httpd
 
@@ -902,7 +904,6 @@ The web page is correctly showing up :
 <figure class="image">
   <img src="pictures\stepB-dyn\jobby-01.png" alt="web OK">
 </figure>
-
 And everything seems OK in the balancer-manager :
 The web page is correctly showing up :
 
