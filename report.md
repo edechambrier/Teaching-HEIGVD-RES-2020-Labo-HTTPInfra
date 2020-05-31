@@ -805,3 +805,49 @@ We can now launch the container and take a look at the results :
 
 
 as we can see, the cookie in the website is set to `sticky.member0`, and, after refreshing the website a bunch of times, we can see in the balance-manager that only the `http://172.17.0.2` URL with the route `member0` has been incremented.
+
+
+### Dynamic cluster management
+Maby next time...
+
+### Management UI
+
+After a bit of research on Internet, [portainer](https://www.portainer.io/) seemed to be a nice choice.
+
+We follow the Quick Start guide available here : [Quick Start](https://www.portainer.io/documentation/quick-start/) with the followin commands :
+```
+$ docker volume create portainer_data
+$ docker run -d -p 9000:9000 -p 8000:8000 --name portainer --restart always -v /var/run/docker.sock:/var/run/docker.sock -v portainer_data:/data portainer/portainer
+```
+>note : the command can be slightly different depending on your environment
+
+We can now open ou webbrowser on the docker manchine address with the port 9000.
+
+
+Here you have the login page.
+
+<figure class="image">
+  <img src="pictures\stepB-UI\second-login.png" alt="login">
+</figure>
+>normally, on first login, you are asked to create an account. I forgot to take a screen-shot of that...
+ But it is good to know that you configutration is saved, even if shut down the container.
+
+Once you login, you are greeted with a nice home page.
+<figure class="image">
+  <img src="pictures\stepB-UI\portainer-home.png" alt="Home page">
+</figure>
+
+The part that interests-us are the `Local` options.
+This is the infomation on that page.
+The information is quite intersting and complete.
+<figure class="image">
+  <img src="pictures\stepB-UI\portainer-local.png" alt="loal stuff">
+</figure>
+
+Just to go a bit further, lets take a look at the running containers.
+And as expected, we can see all the containers running, including the `portainer`one
+<figure class="image">
+  <img src="pictures\stepB-UI\portainer-running-stuff.png" alt="running stuff">
+</figure>
+
+Portainer seems like a nice complete tool for managing Docker.
