@@ -727,3 +727,80 @@ We can now start our `res/apache_lb` server and take a look at the result !
 
 You can see in the balancer-manager screen-shot that the `balancer://dynamic` has been elected far more often than the `balancer://staticapp`.
 This our javascript in work ! As it is calling for new jobs every 2 seconds.
+
+
+### Load balancing: round-robin vs sticky sessions
+
+#### settin-up the configuration
+
+>All the files regardding this step can be found in the following directory : `docker-images/apache-reverse-proxy-dynamic-loadbalance-sticky` 
+
+Sticky sessions can be verry useful in diffrent cases : for example, if you have to log into a web page, you do not want to relog your self every time you clock on a link or reload the page becaue you have been routed to a different server.
+
+To set up the sticky sessions, we are going to modify the `config-template.php` file.
+
+```php
+<?php
+$dynamic_app[0] = getenv('DYNAMIC_APP_0');
+$dynamic_app[1] = getenv('DYNAMIC_APP_1');
+$static_app[0] = getenv('STATIC_APP_0');
+$static_app[1] = getenv('STATIC_APP_1');
+$static_app[2] = getenv('STATIC_APP_2');
+?>
+<VirtualHost *:80>
+		ServerName demo.res.ch
+		
+		<Location "/balancer-manager">
+				SetHandler balancer-manager
+		</Location>
+		
+		ProxyPass /balancer-manager !
+		
+		<Proxy balancer://dynamic>
+				BalancerMember http://<?php echo $dynamic_app[0] ?> 
+				BalancerMember http://<?php echo $dynamic_app[1] ?> 
+				ProxySet lbmethod=byrequests
+		</Proxy>
+		
+		<Proxy balancer://staticapp>
+				BalancerMember http://<?php echo $static_app[0] ?> route=member0
+				BalancerMember http://<?php echo $static_app[1] ?> route=member1
+				BalancerMember http://<?php echo $static_app[2] ?> route=member2
+				ProxySet lbmethod=byrequests
+				ProxySet stickysession=Application_STICKY
+		</Proxy>
+		Header add Set-Cookie "Application_STICKY=sticky.%{BALANCER_WORKER_ROUTE}e;path=/;" env=BALANCER_ROUTE_CHANGED
+		
+		
+		ProxyPass "/api/students/" "balancer://dynamic/"
+		ProxyPassReverse "/api/students/" "balancer://dynamic/"
+		
+		ProxyPass "/" "balancer://staticapp/"
+		ProxyPassReverse "/" "balancer://staticapp/"
+		
+</VirtualHost>
+```
+This configuration works by setting a cookie containing the nformation about what server loaded the page `route=memberX`, and using the same server ecery time the URL is accessed.
+`ProxySet stickysession=Application_STICKY` is to say we are using a sticky session wtun the parameters defined in `Application_STICKY`.
+The `Application_STICKY` parameters are determined by the cookie made here : `Header add Set-Cookie "Application_STICKY=sticky.%{BALANCER_WORKER_ROUTE}e;path=/;" env=BALANCER_ROUTE_CHANGED`
+
+
+#### testing out
+
+As we want to keep avery step, we are going to buil the new Docker container : `docker build -t res/apache_lb_stky .`
+
+The cleaning-up an starting the `res/ajax_playground` and `res/express_playground` is the same as in the previos step.
+
+We can now launche te conainer and take a look at the results :
+`docker run -e STATIC_APP_0=172.17.0.2:80 -e STATIC_APP_1=172.17.0.3:80 -e STATIC_APP_2=172.17.0.4:80 -e DYNAMIC_APP_0=172.17.0.5:3000 -e DYNAMIC_APP_1=172.17.0.6:3000 -p 8080:80 -it res/apache_lb_stky`
+
+<figure class="image">
+  <img src="pictures\stepB-sticky\website.png" alt="web result">
+</figure>
+
+<figure class="image">
+  <img src="pictures\stepB-sticky\balance-manager.png" alt="balancer-manager">
+</figure>
+
+
+as we can see, the cookie in the websire is set to `sticky.member0`, and, after refreshing the website a bunch of times, wu can see in the balance-manager that only the `http://172.17.0.2` URL with the route `member0` has been incemented.
