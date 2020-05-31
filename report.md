@@ -808,7 +808,142 @@ as we can see, the cookie in the website is set to `sticky.member0`, and, after 
 
 
 ### Dynamic cluster management
-Maby next time...
+
+#### setting-up the configuration
+
+>All the files regarding this step can be found in the following directory : `docker-images/apache-reverse-proxy-dynamic-loadbalance-dynamic`
+
+For this step, we are going to continue playing with the apache configuration *(as we have been playing with it up until now...)*.
+
+We need to modify the Dockerimage file in order to add the `proxy_hcheck` module :
+```
+FROM php:7.4-apache
+
+COPY apache2-foreground /usr/local/bin/
+
+COPY templates /var/apache2/templates
+COPY conf/ /etc/apache2
+
+RUN a2enmod lbmethod_byrequests
+RUN a2enmod proxy proxy_http
+RUN a2enmod headers
+RUN a2enmod proxy_hcheck
+RUN a2ensite 000-*
+```
+
+Now we can update the configuration of the `config-template.php` file :
+
+```php
+<?php
+$dynamic_app[0] = getenv('DYNAMIC_APP_0');
+$dynamic_app[1] = getenv('DYNAMIC_APP_1');
+$static_app[0] = getenv('STATIC_APP_0');
+$static_app[1] = getenv('STATIC_APP_1');
+$static_app[2] = getenv('STATIC_APP_2');
+?>
+<VirtualHost *:80>
+		ServerName demo.res.ch
+		
+		<Location "/balancer-manager">
+				SetHandler balancer-manager
+		</Location>
+		
+		ProxyPass /balancer-manager !
+		
+		ProxyHCExpr ok234 {%{REQUEST_STATUS} =~ /^[234]/} 
+		
+		<Proxy balancer://dynamic>
+				BalancerMember http://<?php echo $dynamic_app[0] ?> hcmethod=HEAD hcexpr=ok234 hcinterval=10
+				BalancerMember http://<?php echo $dynamic_app[1] ?> hcmethod=HEAD hcexpr=ok234 hcinterval=10
+				ProxySet lbmethod=byrequests
+		</Proxy>
+		
+		<Proxy balancer://staticapp>
+				BalancerMember http://<?php echo $static_app[0] ?> route=member0 hcmethod=HEAD hcexpr=ok234 hcinterval=10
+				BalancerMember http://<?php echo $static_app[1] ?> route=member1 hcmethod=HEAD hcexpr=ok234 hcinterval=10
+				BalancerMember http://<?php echo $static_app[2] ?> route=member2 hcmethod=HEAD hcexpr=ok234 hcinterval=10
+				ProxySet lbmethod=byrequests 
+				ProxySet stickysession=Application_STICKY
+		</Proxy>
+		Header add Set-Cookie "Application_STICKY=sticky.%{BALANCER_WORKER_ROUTE}e;path=/;" env=BALANCER_ROUTE_CHANGED
+		
+		
+		ProxyPass "/api/students/" "balancer://dynamic/"
+		ProxyPassReverse "/api/students/" "balancer://dynamic/"
+		
+		ProxyPass "/" "balancer://staticapp/"
+		ProxyPassReverse "/" "balancer://staticapp/"
+		
+</VirtualHost>
+```
+
+We have added the line `ProxyHCExpr ok234 {%{REQUEST_STATUS} =~ /^[234]/}` as well as the `hcmethod=HEAD hcexpr=ok234 hcinterval=10` information after every server we want to check.
+This checks the servers by sending a simple `HEAD` request every 10 seconds and making sure that the response status is 2xx, 3xx or 4xx. That way, we know that our servers are alive !
+
+#### testing out
+
+now we build the container and start it !
+>The cleaning-up an starting the `res/ajax_playground` and `res/express_playground` is the same as in the previous step.
+
+```
+docker build -t res/apache_lb_dyn .
+
+docker run -e STATIC_APP_0=172.17.0.2:80 -e STATIC_APP_1=172.17.0.3:80 -e STATIC_APP_2=172.17.0.4:80 -e DYNAMIC_APP_0=172.17.0.5:3000 -e DYNAMIC_APP_1=172.17.0.6:3000 -p 8080:80 -it res/apache_lb_dyn
+```
+
+Now lets see if everything is going OK...
+
+all containers are correctly running :
+<figure class="image">
+  <img src="pictures\stepB-dyn\docker-all-ok.png" alt="all containers OK">
+</figure>
+
+The web page is correctly showing up :
+<figure class="image">
+  <img src="pictures\stepB-dyn\jobby-01.png" alt="web OK">
+</figure>
+
+And everything seems OK in the balancer-manager :
+The web page is correctly showing up :
+
+<figure class="image">
+  <img src="pictures\stepB-dyn\balancer-manager-all-ok.png" alt="balancer-manager-all-ok">
+</figure>
+
+>note that now we have enabled the `proxy_hcheck` module, we have more options and information in the balancer-manager
+
+So now lets kill the `apache_ajax_2` as it is the one currently used for the website (this will be interesting).
+>we can see that with the `cookie` and the `Elected` column of the balancer-manager
+
+<figure class="image">
+  <img src="pictures\stepB-dyn\docker-killed-ajax2.png" alt="server killed">
+</figure>
+
+After reloardin the webpage, it is still up and running !
+>the cookie has chaned : the server used is now the `apache_ajax_0` one.
+<figure class="image">
+  <img src="pictures\stepB-dyn\jobby-02-still-up.png" alt="web OK">
+</figure>
+
+we can see in the balancer-manager that the server is down :
+>the status of `member2` is `Init HcFl`
+<figure class="image">
+  <img src="pictures\stepB-dyn\balancer-manager-faulty.png" alt="Error shown">
+</figure>
+
+So lets start the server up again ad see if it is picked-up by the balancer manager :
+<figure class="image">
+  <img src="pictures\stepB-dyn\docker-all-ok-again.png" alt="All continers running again">
+</figure>
+
+And lets have a look at the balancer-manager :
+<figure class="image">
+  <img src="pictures\stepB-dyn\balancer-manager-all-ok-again.png" alt="balancer-manager all OK">
+</figure>
+
+Everything is working again without any problems !
+>this has worked because the `apache_ajax_2` took the same `IP` address as it had before shutting down.
+
 
 ### Management UI
 
