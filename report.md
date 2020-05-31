@@ -553,7 +553,7 @@ And now, we can rebuild the Docker image : `docker build -t res/apache_rp_dyn .`
 
 We start by checking taht no conainers are runnin.
 Then we can start multiple instances of the `res/ajax_playground` and `res/express_playground` images in order to have diffrent `IP` adresses.
-> note that a name has been given to the image instances we are going to use
+>note that a name has been given to the image instances we are going to use
 
 ```
 docker ps
@@ -579,7 +579,7 @@ docker inspect express_dynmanic | grep -i ipaddress
 ```
 
 <figure class="image">
-  <img src="pictures\step5\part5-validating-01.png" alt="Validating part 2 : getting the IP addresses">
+  <img src="pictures\step5\part5-validating-02.png" alt="Validating part 2 : getting the IP addresses">
 </figure>
 > we have found the IP for apache_ajax : 172.17.0.5
  and for express_dynmanic : 172.17.0.8
@@ -594,3 +594,136 @@ And we can get the rewarding results :
 <figure class="image">
   <img src="pictures\step5\part5-validating-03.png" alt="Validating part 2 : getting the IP addresses">
 </figure>
+
+
+## Extra points !
+
+### Load balancing: multiple server nodes
+
+#### settin-up the configuration
+
+All the files regardding this step can be found in the following directory : `docker-images/apache-reverse-proxy-dynamic-loadbalance` 
+
+In order to enable the load balancing, the `config-template.php` file has been modified like so :
+```php
+<?php
+$dynamic_app[0] = getenv('DYNAMIC_APP_0');
+$dynamic_app[1] = getenv('DYNAMIC_APP_1');
+$static_app[0] = getenv('STATIC_APP_0');
+$static_app[1] = getenv('STATIC_APP_1');
+$static_app[2] = getenv('STATIC_APP_2');
+?>
+<VirtualHost *:80>
+		ServerName demo.res.ch
+		
+		<Location "/balancer-manager">
+				SetHandler balancer-manager
+		</Location>
+		
+		ProxyPass /balancer-manager !
+		
+		<Proxy balancer://dynamic>
+				BalancerMember http://<?php echo $dynamic_app[0] ?> 
+				BalancerMember http://<?php echo $dynamic_app[1] ?> 
+				ProxySet lbmethod=byrequests
+		</Proxy>
+		
+		<Proxy balancer://staticapp>
+				BalancerMember http://<?php echo $static_app[0] ?> 
+				BalancerMember http://<?php echo $static_app[1] ?> 
+				BalancerMember http://<?php echo $static_app[2] ?> 
+				ProxySet lbmethod=byrequests
+		</Proxy>
+		
+		ProxyPass "/api/students/" "balancer://dynamic/"
+		ProxyPassReverse "/api/students/" "balancer://dynamic/"
+		
+		ProxyPass "/" "balancer://staticapp/"
+		ProxyPassReverse "/" "balancer://staticapp/"
+		
+</VirtualHost>
+```
+As you can can see, we have set the file for two servers for the `dynamic app` and three for the `static app`.
+
+This part of the configuraion is to enable a Load Balancer Manager web interface that should be accessed via the folowing URL : http://demo.res.ch:8080/balancer-manager
+```
+<Location "/balancer-manager">
+		SetHandler balancer-manager
+</Location>
+```
+In order not to be redirected to one of the `static app` servers when entering the URL from above, this line has to be added : `ProxyPass /balancer-manager !`
+
+The `<Proxy balancer://[balancer-name]>` tags are where we define the different servers. The `ProxySet lbmethod=byrequests` determins the way the balancing for the concerned servers should work.
+In this case, `byrequests` works in a round-robin mode.
+
+For the `ProxyPass` and `ProxyPassReverse` part of the configuration file, all we need to do is to set the target to `balancer://[balancer-name]` URL.
+
+The `apache2-foreground` file has also been modified (just so that we know what is going on...):
+```
+# Add setup for RES lab : dynamic reverse proxy
+echo "Setup for the RES lab... LOAD BALANCING !!!!!"
+echo "Static app URL:  $STATIC_APP_0"
+echo "Static app URL:  $STATIC_APP_1"
+echo "Static app URL:  $STATIC_APP_2"
+echo "Dynamic app URL: $DYNAMIC_APP_0"
+echo "Dynamic app URL: $DYNAMIC_APP_1"
+php /var/apache2/templates/config-template.php > /etc/apache2/sites-available/001-reverse-proxy.conf
+php /var/apache2/templates/config-template.php > /etc/apache2/sites-enabled/001-reverse-proxy.conf
+```
+
+Now that everything is correctly configured, we can build the image : `docker build -t res/apache_lb .`
+
+#### getting the Docker conainers ready
+
+We start by checking taht no conainers are runnin.
+Then we can start multiple instances of the `res/ajax_playground` and `res/express_playground` and get their `IP` addresses
+
+```bash
+docker ps
+
+docker run -d --name apache_ajax_0 res/ajax_playground
+docker run -d --name apache_ajax_1 res/ajax_playground
+docker run -d --name apache_ajax_2 res/ajax_playground
+
+docker run -d --name express_dynmanic_0 res/express_playground
+docker run -d --name express_dynmanic_1 res/express_playground
+
+docker inspect apache_ajax_0 | grep -i ipaddress
+docker inspect apache_ajax_1 | grep -i ipaddress
+docker inspect apache_ajax_2 | grep -i ipaddress
+docker inspect express_dynmanic_0 | grep -i ipaddress
+docker inspect express_dynmanic_1 | grep -i ipaddress
+```
+
+<figure class="image">
+  <img src="pictures\stepB-lb\clean-and-start.png" alt="Starting conainers">
+</figure>
+
+<figure class="image">
+  <img src="pictures\stepB-lb\getting-ip.png" alt="Getting IP addresses">
+</figure>
+
+The followin `IP` addresses are found :
+```
+apache_ajax_0 : 172.17.0.2
+apache_ajax_1 : 172.17.0.3
+apache_ajax_2 : 172.17.0.4
+
+express_dynmanic_0 : 172.17.0.5
+express_dynmanic_1 : 172.17.0.6
+```
+
+We can now start our `res/apache_lb` server and take a look at the result !
+`docker run -e STATIC_APP_0=172.17.0.2:80 -e STATIC_APP_1=172.17.0.3:80 -e STATIC_APP_2=172.17.0.4:80 -e DYNAMIC_APP_0=172.17.0.5:3000 -e DYNAMIC_APP_1=172.17.0.6:3000 --name apache_rp_dyn -p 8080:80 -it res/apache_lb`
+>in the future, this should be automatted
+
+<figure class="image">
+  <img src="pictures\stepB-lb\web-ok.png" alt="Resul web still working">
+</figure>
+
+<figure class="image">
+  <img src="pictures\stepB-lb\web-load-balancer.png" alt="having a look at the balancer-manager">
+</figure>
+
+You can see in the balancer-manager screen-shot that the `balancer://dynamic` has been elected far more often than the `balancer://staticapp`.
+This our javascript in work ! As it is calling for new jobs every 2 seconds.
